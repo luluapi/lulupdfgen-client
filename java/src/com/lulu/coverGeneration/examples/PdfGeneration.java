@@ -5,6 +5,11 @@ import com.lulu.pdfGenerator.beans.coverSize.CoverSizeData;
 import com.lulu.pdfGenerator.exceptions.JsonMapperException;
 import com.lulu.pdfGenerator.json.JsonMapper;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -22,26 +27,75 @@ public class PdfGeneration {
             "Lulu Enterprises was founded in early 2002. OpenMind Publishing, founded by Bradley Schultz and Paul Elliot, merged its publishing company and staff with Lulu in the latter part of 2002. OpenMind Publishing was a publisher of customized texts for college professors. ";
 
     //private static final String commonImage = "http://cfl.uploads.mrx.ca/ham/images/newser/2009/08/BobYoung5725.jpg";
-    private static final String KEY = "k";
+    private static final String KEY = "";
+    
     public static void main(String args[]) throws Exception {
+        String key = KEY;
+        System.out.println(args);
+        System.out.println(args.length);
+        
+        if (args.length == 1) {
+            key = args[0];
+        }
+        if (key == null || key.equals("")) {
+            System.out.println("api_key is needed");
+            System.exit(1);
+        }
         CoverGeneratorConfig coverGeneratorConfig = buildCoverGeneratorConfigExample();
-        generateCover(coverGeneratorConfig);
+        generateCover(getHttpConnection(), coverGeneratorConfig, key);
+        //generateCover(getHttpsConnection(), coverGeneratorConfig, key);
     }
 
-    private static void generateCover(CoverGeneratorConfig coverGeneratorConfig) throws JsonMapperException, IOException {
-        String data = JsonMapper.toJson(coverGeneratorConfig, true);
-        System.out.println(data);
+    private static HttpURLConnection getHttpConnection() throws Exception {
         final String host = "http://apps.lulu.com/api/pdfgen";
         final String urlString = "/covers/v1/generate/templateCreatorId/lulu/templateId/6x9dustjacket";
         URL url = new URL(host + urlString);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        return urlConnection;
+    }
+    
+    private static HttpURLConnection getHttpsConnection() throws Exception {
+        final String host = "https://apps.lulu.com/api/pdfgen";
+        final String urlString = "/covers/v1/generate/templateCreatorId/lulu/templateId/6x9dustjacket";
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(
+                            java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(
+                            java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        URL url = new URL(host + urlString);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        return urlConnection;
+    }
+    
+    private static void generateCover(HttpURLConnection urlConnection, CoverGeneratorConfig coverGeneratorConfig, String key) throws JsonMapperException, IOException {
+        String data = JsonMapper.toJson(coverGeneratorConfig, true);
+        System.out.println(data);
         urlConnection.setRequestProperty("CONTENT-TYPE", "application/json");
 
         urlConnection.setRequestMethod("POST");
         urlConnection.setDoOutput(true);
         //urlConnection.setDoInput(true);
         OutputStreamWriter wr = new OutputStreamWriter(urlConnection.getOutputStream());
-        String urlParameters = "&api_key=" + URLEncoder.encode(KEY, "UTF-8") +
+        String urlParameters = "&api_key=" + URLEncoder.encode(key, "UTF-8") +
                 "&data=" + URLEncoder.encode(data, "UTF-8");
 
         wr.write(urlParameters);

@@ -129,7 +129,7 @@ class ServiceError(Exception):
 class CoverGenServiceJSONClient:
   def __init__(self, api_key, service, version, method, templateCreatorId, templateId):
     host = "apps.lulu.com/api/pdfgen"
-    self.url_format = "http://%s/%s/%s/%s/templateCreatorId/%s/templateId/%s" % (host, service, version, method, templateCreatorId, templateId)
+    self.url_format = "https://%s/%s/%s/%s/templateCreatorId/%s/templateId/%s" % (host, service, version, method, templateCreatorId, templateId)
     self.api_key = api_key
 
   def call(self, data, form_data=None):

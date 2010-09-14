@@ -4,4 +4,4 @@ do
   CLASSPATH=${CLASSPATH}:${i}
 done
 echo $CLASSPATH
-java -classpath $CLASSPATH com.lulu.coverGeneration.examples.PdfGeneration
+java -classpath $CLASSPATH com.lulu.coverGeneration.examples.PdfGeneration $1
